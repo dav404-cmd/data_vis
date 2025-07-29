@@ -7,9 +7,15 @@ def extract_job_id(df:pd.DataFrame,url_column:str = 'url') -> pd.DataFrame:
     return df
 
 def deduplicate_jobs(df:pd.DataFrame) -> pd.DataFrame:
-    df.sort_values('days_ago',ascending=False)
-    df.drop_duplicates(subset='job_id',keep='first')
+    df = df.sort_values('days_ago',ascending=False)
+    df = df.drop_duplicates(subset='job_id',keep='first')
     return df
+
+def drop_cols(df:pd.DataFrame,cols:list ) -> pd.DataFrame:
+    return df.drop(columns=cols)
+
+def shuffler(df:pd.DataFrame) -> pd.DataFrame:
+    return df.sample(frac=1).reset_index(drop= True)
 
 def main():
     script_dir = Path(__file__).resolve().parent
@@ -20,12 +26,19 @@ def main():
     data_dir = project_root / "data" / "data_cleaned"
     file_path = data_dir / "fix_date_jobs.csv"
 
+    pd.set_option("display.max_columns",None)
+    pd.set_option("display.max_colwidth",None)
+    pd.set_option("display.max_rows",100)
+    pd.set_option("display.expand_frame_repr",False)
+
     df = pd.read_csv(file_path)
 
     df = extract_job_id(df)
     df = deduplicate_jobs(df)
+    df = drop_cols(df,['url','job_id'])
 
-    print(df)
+    df = shuffler(df)
+    print(df.head(100))
 
 if __name__ == "__main__":
     main()
