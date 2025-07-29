@@ -1,5 +1,4 @@
 import os
-
 import pandas as pd
 import re
 from pathlib import Path
@@ -18,7 +17,7 @@ new_york_path = clean_dir / "raw" / "jobs_raw_zip_newyork.csv"
 remote_path = clean_dir / "raw" / "jobs_raw_zip_remote.csv"
 
 #path to store the cleaned and merged data
-all_output_path = clean_dir / "date_cleaned" / "fix_date_jobs.csv"
+all_output_path = clean_dir / "data_cleaned" / "fix_date_jobs.csv"
 os.makedirs(os.path.dirname(all_output_path),exist_ok=True)
 
 print("Resolved path:", los_path)
