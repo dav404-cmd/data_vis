@@ -53,6 +53,18 @@ def clean_salary_column(df: pd.DataFrame, column: str = 'salary') -> pd.DataFram
     df['salary_usd_yearly_avg'] = df[column].apply(parse_salary)
     return df
 
+def fill_missing_salary(df: pd.DataFrame) -> pd.DataFrame:
+    #fill salary nan with location based avg.
+    location_salary_avg = df.groupby('location')['salary_usd_yearly_avg'].mean()
+    global_avg = df['salary_usd_yearly_avg'].mean()
+    df['salary_filled'] = df.apply(lambda row: location_salary_avg[row['location']]
+    if pd.isna(row['salary_usd_yearly_avg']) and row['location'] in location_salary_avg
+    else row ['salary_usd_yearly_avg'],
+    axis= 1)
+    df['salary_filled'] = df['salary_filled'].fillna(global_avg)
+    #fill remaining nans with global avg
+    return df
+
 #helpers
 def drop_cols(df:pd.DataFrame,cols:list ) -> pd.DataFrame:
     return df.drop(columns=cols)
@@ -73,6 +85,7 @@ def main():
     pd.set_option("display.max_colwidth",None)
     pd.set_option("display.max_rows",100)
     pd.set_option("display.expand_frame_repr",False)
+    pd.options.display.float_format = '{:.2f}'.format
 
     df = pd.read_csv(file_path)
     df = extract_job_id(df)
@@ -81,6 +94,9 @@ def main():
     df = shuffler(df)
     df = clean_salary_column(df)
     df = drop_cols(df,['salary'])
+    df = fill_missing_salary(df)
+    nans = df['salary_filled'].isna().sum()
+    print(f"missing values : {nans}")
     print(df.head(100))
 
 if __name__ == "__main__":
