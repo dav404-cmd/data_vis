@@ -55,9 +55,10 @@ def clean_salary_column(df: pd.DataFrame, column: str = 'salary') -> pd.DataFram
     return df
 
 def fill_missing_salary(df: pd.DataFrame) -> pd.DataFrame:
+    df_clean = remove_outliers(df, 'salary_usd_yearly_avg')
     #fill salary nan with location based avg,fallback to global avg if it's not available
-    location_salary_avg = df.groupby('location')['salary_usd_yearly_avg'].mean()
-    global_avg = df['salary_usd_yearly_avg'].mean()
+    location_salary_avg = df_clean.groupby('location')['salary_usd_yearly_avg'].median()
+    global_avg = df_clean['salary_usd_yearly_avg'].median()
     #if location avg available fill missing salary; else keep original value.
     df['salary_filled'] = df.apply(lambda row: location_salary_avg[row['location']]
     if pd.isna(row['salary_usd_yearly_avg']) and row['location'] in location_salary_avg
@@ -68,6 +69,17 @@ def fill_missing_salary(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 #helpers
+
+def remove_outliers(df:pd.DataFrame,col:str) -> pd.DataFrame:
+    # remove extreme outliers .
+    q1 = df[col].quantile(0.25)
+    q3 = df[col].quantile(0.75)
+    iqr = q3 - q1
+    lower = q1 - 1.5 * iqr
+    upper = q3 + 1.5 * iqr
+
+    return df[(df[col] >= lower) & (df[col] <= upper)].copy()
+
 def drop_cols(df:pd.DataFrame,cols:list ) -> pd.DataFrame:
     return df.drop(columns=cols)
 
@@ -99,8 +111,11 @@ def main():
     df = shuffler(df)
     df = clean_salary_column(df)
     df = drop_cols(df,['salary','source'])
+    df = remove_outliers(df,'salary_usd_yearly_avg')
     df = fill_missing_salary(df)
 
+    global_avg = df['salary_usd_yearly_avg'].mean()
+    print(f"global_avg : {global_avg}")
     print(df.head(100))
 
     df.to_csv(output_path,index=False)
