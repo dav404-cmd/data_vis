@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
+import os
 from pathlib import Path
 
 def extract_job_id(df:pd.DataFrame,url_column:str = 'url') -> pd.DataFrame:
@@ -47,22 +48,23 @@ def parse_salary(salary_str):
     elif is_monthly:
         return avg * 12    # 12 mo/yr
     else:
-        return avg
+        return avg         # assume fixed
 
 def clean_salary_column(df: pd.DataFrame, column: str = 'salary') -> pd.DataFrame:
     df['salary_usd_yearly_avg'] = df[column].apply(parse_salary)
     return df
 
 def fill_missing_salary(df: pd.DataFrame) -> pd.DataFrame:
-    #fill salary nan with location based avg.
+    #fill salary nan with location based avg,fallback to global avg if it's not available
     location_salary_avg = df.groupby('location')['salary_usd_yearly_avg'].mean()
     global_avg = df['salary_usd_yearly_avg'].mean()
+    #if location avg available fill missing salary; else keep original value.
     df['salary_filled'] = df.apply(lambda row: location_salary_avg[row['location']]
     if pd.isna(row['salary_usd_yearly_avg']) and row['location'] in location_salary_avg
     else row ['salary_usd_yearly_avg'],
     axis= 1)
+    # fill remaining nans with global avg
     df['salary_filled'] = df['salary_filled'].fillna(global_avg)
-    #fill remaining nans with global avg
     return df
 
 #helpers
@@ -73,6 +75,7 @@ def shuffler(df:pd.DataFrame) -> pd.DataFrame:
     return df.sample(frac=1).reset_index(drop= True)
 
 def main():
+
     script_dir = Path(__file__).resolve().parent
     project_root = script_dir.parent
 
@@ -80,6 +83,8 @@ def main():
 
     data_dir = project_root / "data" / "data_cleaned"
     file_path = data_dir / "fix_date_jobs.csv"
+    output_path = data_dir / "processed_data.csv"
+    os.makedirs(os.path.dirname(output_path),exist_ok=True)
 
     pd.set_option("display.max_columns",None)
     pd.set_option("display.max_colwidth",None)
@@ -93,11 +98,12 @@ def main():
     df = drop_cols(df,['url','job_id'])
     df = shuffler(df)
     df = clean_salary_column(df)
-    df = drop_cols(df,['salary'])
+    df = drop_cols(df,['salary','source'])
     df = fill_missing_salary(df)
-    nans = df['salary_filled'].isna().sum()
-    print(f"missing values : {nans}")
+
     print(df.head(100))
+
+    df.to_csv(output_path,index=False)
 
 if __name__ == "__main__":
     main()
