@@ -113,8 +113,10 @@ def main():
     df = remove_outliers(df,'salary_usd_yearly_avg')
     df = fill_missing_salary(df)
 
+
     global_avg = df['salary_usd_yearly_avg'].mean()
     print(f"global_avg : {global_avg}")
+    df = drop_cols(df,['salary_usd_yearly_avg'])
     print(df.head(100))
 
     df.to_csv(output_path,index=False)

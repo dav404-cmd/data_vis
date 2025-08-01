@@ -7,3 +7,4 @@ __pycache__/
 .idea
 
 /data/*
+!/data/data_cleaned/processed_data.csv
