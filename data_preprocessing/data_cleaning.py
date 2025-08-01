@@ -55,10 +55,9 @@ def clean_salary_column(df: pd.DataFrame, column: str = 'salary') -> pd.DataFram
     return df
 
 def fill_missing_salary(df: pd.DataFrame) -> pd.DataFrame:
-    df_clean = remove_outliers(df, 'salary_usd_yearly_avg')
     #fill salary nan with location based avg,fallback to global avg if it's not available
-    location_salary_avg = df_clean.groupby('location')['salary_usd_yearly_avg'].median()
-    global_avg = df_clean['salary_usd_yearly_avg'].median()
+    location_salary_avg = df.groupby('location')['salary_usd_yearly_avg'].median()
+    global_avg = df['salary_usd_yearly_avg'].median()
     #if location avg available fill missing salary; else keep original value.
     df['salary_filled'] = df.apply(lambda row: location_salary_avg[row['location']]
     if pd.isna(row['salary_usd_yearly_avg']) and row['location'] in location_salary_avg
