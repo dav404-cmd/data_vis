@@ -36,7 +36,6 @@ A beginner-friendly project for cleaning and visualizing job data scraped from Z
 
 ### 🚀 Try it Out
 **Live Site:** [Click Here](https://jobdatavisualization.streamlit.app)  
-*(If hosted on Streamlit Cloud)*
 
 ---
 
